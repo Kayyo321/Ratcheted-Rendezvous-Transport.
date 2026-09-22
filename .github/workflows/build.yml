@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
-  tags: ['v*']
 
 env:
   ZIG_VERSION: 0.16.0
