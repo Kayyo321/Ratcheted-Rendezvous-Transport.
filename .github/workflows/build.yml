@@ -1,0 +1,60 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  tags: ['v*']
+
+env:
+  ZIG_VERSION: 0.16.0
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - run: zig build fmt-check
+      - run: zig build test
+      - run: zig build -Doptimize=ReleaseSafe
+
+  cross-build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-linux
+            name: linux-x86_64
+          - target: aarch64-linux
+            name: linux-aarch64
+          - target: x86_64-macos
+            name: macos-x86_64
+          - target: aarch64-macos
+            name: macos-aarch64
+          - target: x86_64-windows
+            name: windows-x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - run: zig build -Dtarget=${{ matrix.target }} -Doptimize=ReleaseSafe
+      - name: Package artifact
+        shell: bash
+        run: |
+          mkdir -p package
+          cp zig-out/bin/rrt-core* zig-out/bin/rrt-cli* package/
+          printf 'target: %s\n' '${{ matrix.target }}' > package/README.txt
+          tar -czf rrt-0.2.0-${{ matrix.name }}.tar.gz -C package .
+          sha256sum rrt-0.2.0-${{ matrix.name }}.tar.gz > rrt-0.2.0-${{ matrix.name }}.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rrt-0.2.0-${{ matrix.name }}
+          path: |
+            rrt-0.2.0-${{ matrix.name }}.tar.gz
+            rrt-0.2.0-${{ matrix.name }}.sha256
