@@ -1,5 +1,15 @@
 # Development workflow
 
+## Repository branch hygiene
+
+The canonical remote branch is `origin`. Keep local work on a descriptive
+branch (for example, `codex/fix-version-control`) and verify its upstream
+with `git branch -vv`. Do not name a local branch `origin` or configure an
+upstream such as `refs/heads/heads/origin`; those names make Git and hosting
+UIs display misleading ahead/behind status. If an accidental remote branch
+named `heads/origin` exists, remove it after confirming that `origin` contains
+the intended history.
+
 RRT changes use small, single-purpose commits. Each commit contains one coherent modification: a protocol primitive, a validation rule, a test vector, a build adjustment, or a documentation update. Avoid mixing refactors, behavior changes, generated files, and formatting-only changes in the same commit.
 
 ## Change loop
