@@ -10,6 +10,8 @@ RRT is a Zig 0.14.1 project with two build artifacts: `rtt-core` and `rtt-cli`. 
 
 `src/identity.zig` constructs long-term Ed25519 identities. The identity ID is SHA-256 of the public signing key truncated to 16 bytes. Its safety-number routine domain-separates version 1 and sorted public keys, then produces eight zero-padded five-digit groups. `src/trust_store.zig` models peer states. Only `verified` permits application traffic; a different observed identity key changes a non-terminal peer to `changed`.
 
+`src/device.zig` represents a device certificate containing device signing and X25519 public keys, generation, validity interval, and the issuing identity. Certificate validation checks the identity ID derivation, a maximum 366-day validity period, the supplied time window, and the Ed25519 signature over the fixed-order certificate body.
+
 `src/handshake.zig` binds handshake bytes with `RRT-TRANSCRIPT-v1`, requires mode equality, and derives an initial root key from three DH outputs with `RRT-ROOT-v1`. `src/ratchet.zig` derives message and chain keys through HMAC-SHA-256 and erases live key material on close. `src/transparency.zig` implements linked, signed transparency-entry validation.
 
 `src/envelopes.zig` creates and opens 1024-, 4096-, 16384-, and 65536-byte `RTE1` envelopes. The visible header carries routing data, random envelope ID, sequence, and nonce. Payload length, payload bytes, and random padding are inside authenticated ciphertext. `src/cover_traffic.zig` makes a constant number of decisions per privacy slot; data decisions replace cover decisions without increasing that number. `src/batching.zig` validates bounded batching windows.
