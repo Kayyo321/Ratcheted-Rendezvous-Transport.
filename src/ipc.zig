@@ -1,5 +1,7 @@
 const std = @import("std");
 const crypto = @import("crypto.zig");
+const encoding = @import("encoding.zig");
+const errors = @import("errors.zig");
 
 pub const magic = "RRC1";
 pub const version: u8 = 1;
@@ -13,6 +15,76 @@ pub const Frame = struct {
     kind: Kind,
     payload: []const u8,
 };
+
+pub const Request = struct {
+    request_id: u64,
+    capability_proof: [32]u8,
+    command: []const u8,
+    payload: []const u8,
+};
+
+pub const Response = struct {
+    request_id: u64,
+    ok: bool,
+    code: errors.Code,
+    payload: []const u8,
+};
+
+pub fn capabilityProof(capability: crypto.Key, request_id: u64, command: []const u8, payload: []const u8) [32]u8 {
+    var writer = encoding.Writer.init(std.heap.page_allocator);
+    defer writer.deinit();
+    writer.writeU64(request_id) catch unreachable;
+    writer.bytes(command) catch unreachable;
+    writer.bytes(payload) catch unreachable;
+    return crypto.hmac(&capability, writer.list.items);
+}
+
+pub fn verifyCapability(request: Request, capability: crypto.Key) bool {
+    const expected = capabilityProof(capability, request.request_id, request.command, request.payload);
+    return std.crypto.timing_safe.eql(expected, request.capability_proof);
+}
+
+pub fn encodeRequest(allocator: std.mem.Allocator, request: Request) ![]u8 {
+    var writer = encoding.Writer.init(allocator);
+    defer writer.deinit();
+    try writer.writeU64(request.request_id);
+    try writer.fixed(&request.capability_proof);
+    try writer.bytes(request.command);
+    try writer.bytes(request.payload);
+    return writer.list.toOwnedSlice();
+}
+
+pub fn decodeRequest(bytes: []const u8) !Request {
+    var reader = encoding.Reader.init(bytes);
+    const id = try reader.readU64();
+    const proof: [32]u8 = (try reader.fixed(32)).*;
+    const command = try reader.bytes();
+    const payload = try reader.bytes();
+    try reader.finish();
+    if (command.len == 0 or command.len > 128 or payload.len > max_payload_bytes) return error.BadFrame;
+    return .{ .request_id = id, .capability_proof = proof, .command = command, .payload = payload };
+}
+
+pub fn encodeResponse(allocator: std.mem.Allocator, response: Response) ![]u8 {
+    var writer = encoding.Writer.init(allocator);
+    defer writer.deinit();
+    try writer.writeU64(response.request_id);
+    try writer.writeU8(@intFromBool(response.ok));
+    try writer.writeU8(@intFromEnum(response.code));
+    try writer.bytes(response.payload);
+    return writer.list.toOwnedSlice();
+}
+
+pub fn decodeResponse(bytes: []const u8) !Response {
+    var reader = encoding.Reader.init(bytes);
+    const id = try reader.readU64();
+    const ok = try reader.readU8();
+    if (ok > 1) return error.BadFrame;
+    const code = std.meta.intToEnum(errors.Code, try reader.readU8()) catch return error.BadFrame;
+    const payload = try reader.bytes();
+    try reader.finish();
+    return .{ .request_id = id, .ok = ok == 1, .code = code, .payload = payload };
+}
 
 /// Serializes a complete frame. The MAC covers the header and payload,
 /// including the length and kind, preventing message-boundary confusion.
@@ -59,4 +131,18 @@ test "IPC rejects modified, truncated, and oversized frames" {
     encoded[header_bytes] ^= 1;
     try std.testing.expectError(error.BadFrame, decode(key, encoded));
     try std.testing.expectError(error.BadFrame, decode(key, encoded[0 .. encoded.len - 1]));
+}
+
+test "IPC requests require the capability proof and reject trailing bytes" {
+    const capability = [_]u8{9} ** 32;
+    const proof = capabilityProof(capability, 7, "status", "{}");
+    const encoded = try encodeRequest(std.testing.allocator, .{ .request_id = 7, .capability_proof = proof, .command = "status", .payload = "{}" });
+    defer std.testing.allocator.free(encoded);
+    const request = try decodeRequest(encoded);
+    try std.testing.expect(verifyCapability(request, capability));
+    try std.testing.expect(!verifyCapability(request, [_]u8{8} ** 32));
+    var trailing: [encoded.len + 1]u8 = undefined;
+    @memcpy(trailing[0..encoded.len], encoded);
+    trailing[encoded.len] = 1;
+    try std.testing.expectError(error.TrailingBytes, decodeRequest(&trailing));
 }
