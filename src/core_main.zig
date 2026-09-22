@@ -4,7 +4,7 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(init.arena.allocator());
     if (args.len < 2 or !std.mem.eql(u8, args[1], "start") and !std.mem.eql(u8, args[1], "relay")) {
-        try std.Io.File.stderr().writeStreamingAll(io, "usage: rtt-core start [--relay] | rtt-core relay\n");
+        try std.Io.File.stderr().writeStreamingAll(io, "usage: rrt-core start [--relay] | rrt-core relay\n");
         return;
     }
     const identity = rrt.identity.Identity.create(io);
