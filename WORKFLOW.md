@@ -11,7 +11,10 @@ RRT changes use small, single-purpose commits. Each commit contains one coherent
    git log --oneline -8
    ```
 
-2. Make one narrowly scoped change. Preserve unrelated user changes.
+2. Make one narrowly scoped change. Preserve unrelated user changes. A dirty
+   working tree is not a reason to combine independent work: use selective
+   staging (`git add path/to/file` or `git add -p`) so the current commit
+   contains only that one change.
 
 3. Format only the files changed by that work:
 
@@ -27,7 +30,11 @@ RRT changes use small, single-purpose commits. Each commit contains one coherent
    zig build -Doptimize=ReleaseSafe
    ```
 
-5. Inspect the staged diff and commit immediately with an imperative, scoped message:
+5. Inspect the staged diff and commit immediately with an imperative, scoped message.
+   Do not begin the next independent change until the staged diff contains one
+   coherent behavior and has been committed. If a change touches several
+   concerns (for example, encoding, storage, IPC, and trust), split it into
+   separate commits even when the working tree already contains user edits:
 
    ```sh
    git add src/path/to/file.zig tests/path/to/file.zig
@@ -37,6 +44,11 @@ RRT changes use small, single-purpose commits. Each commit contains one coherent
    ```
 
 6. Repeat from a clean working tree. Documentation changes that describe completed behavior are committed separately from implementation changes unless they are inseparable from a public interface change.
+
+When the tree cannot be made clean because it contains user work, repeat from
+an unchanged user baseline and keep every agent-authored commit selectively
+staged, single-purpose, and independently buildable. Never use unrelated dirty
+files as justification for a broad “foundation” commit.
 
 ## Commit conventions
 
