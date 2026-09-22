@@ -4,8 +4,8 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const lib = b.addModule("rrt", .{ .root_source_file = b.path("src/lib.zig"), .target = target, .optimize = optimize });
-    const core = b.addExecutable(.{ .name = "rtt-core", .root_module = b.createModule(.{ .root_source_file = b.path("src/core_main.zig"), .target = target, .optimize = optimize, .imports = &.{.{ .name = "rrt", .module = lib }} }) });
-    const cli = b.addExecutable(.{ .name = "rtt-cli", .root_module = b.createModule(.{ .root_source_file = b.path("src/cli_main.zig"), .target = target, .optimize = optimize, .imports = &.{.{ .name = "rrt", .module = lib }} }) });
+    const core = b.addExecutable(.{ .name = "rrt-core", .root_module = b.createModule(.{ .root_source_file = b.path("src/core_main.zig"), .target = target, .optimize = optimize, .imports = &.{.{ .name = "rrt", .module = lib }} }) });
+    const cli = b.addExecutable(.{ .name = "rrt-cli", .root_module = b.createModule(.{ .root_source_file = b.path("src/cli_main.zig"), .target = target, .optimize = optimize, .imports = &.{.{ .name = "rrt", .module = lib }} }) });
     b.installArtifact(core);
     b.installArtifact(cli);
     const run_core = b.addRunArtifact(core);

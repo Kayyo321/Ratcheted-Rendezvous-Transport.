@@ -15,3 +15,4 @@ pub const batching = @import("batching.zig");
 pub const device = @import("device.zig");
 pub const ipc = @import("ipc.zig");
 pub const storage = @import("storage.zig");
+pub const protocol = @import("protocol.zig");
