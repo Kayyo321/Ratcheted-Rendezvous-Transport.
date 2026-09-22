@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
     const run_tests = b.addRunArtifact(tests);
     const ts = b.step("test", "Runs unit tests");
     ts.dependOn(&run_tests.step);
-    const fmt = b.addSystemCommand(&.{ "zig", "fmt", "--check", "src", "tests", "build.zig" });
+    const fmt = b.addSystemCommand(&.{ b.graph.zig_exe, "fmt", "--check", "src", "tests", "build.zig" });
     const fs = b.step("fmt-check", "Checks formatting");
     fs.dependOn(&fmt.step);
 }
