@@ -13,3 +13,5 @@ pub const trust_store = @import("trust_store.zig");
 pub const cover_traffic = @import("cover_traffic.zig");
 pub const batching = @import("batching.zig");
 pub const device = @import("device.zig");
+pub const ipc = @import("ipc.zig");
+pub const storage = @import("storage.zig");
