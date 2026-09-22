@@ -5,7 +5,7 @@ pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const args = try init.minimal.args.toSlice(init.arena.allocator());
     if (args.len < 2) {
-        try std.Io.File.stdout().writeStreamingAll(io, "usage: rtt-cli COMMAND\n");
+        try std.Io.File.stdout().writeStreamingAll(io, "usage: rrt-cli COMMAND\n");
         std.process.exit(2);
     }
     if (std.mem.eql(u8, args[1], "privacy-mode") or std.mem.eql(u8, args[1], "help")) {
@@ -13,7 +13,7 @@ pub fn main(init: std.process.Init) !void {
         return;
     }
     if (std.mem.eql(u8, args[1], "identity") and args.len == 3 and std.mem.eql(u8, args[2], "show")) {
-        try std.Io.File.stdout().writeStreamingAll(io, "rtt-core unavailable (ERR_CORE_UNAVAILABLE)\n");
+        try std.Io.File.stdout().writeStreamingAll(io, "rrt-core unavailable (ERR_CORE_UNAVAILABLE)\n");
         std.process.exit(3);
     }
     _ = rrt;
