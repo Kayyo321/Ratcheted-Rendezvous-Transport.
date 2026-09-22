@@ -46,7 +46,7 @@ pub fn dh(secret: [32]u8, public: [32]u8) !Key {
     return out;
 }
 test "aead and signatures round-trip" {
-    const pair = SigningKeyPair.generate();
+    const pair = SigningKeyPair.generate(std.testing.io);
     const msg = "rrt";
     const sig = try sign(pair, msg);
     try verify(pair.public_key.toBytes(), msg, sig);

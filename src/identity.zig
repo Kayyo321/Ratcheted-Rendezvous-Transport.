@@ -7,10 +7,10 @@ pub const Identity = struct {
     signing: crypto.SigningKeyPair,
     created_at_ms: u64,
     generation: u32 = 1,
-    pub fn create() Identity {
-        const kp = crypto.SigningKeyPair.generate();
+    pub fn create(io: std.Io) Identity {
+        const kp = crypto.SigningKeyPair.generate(io);
         const id = identityId(kp.public_key.toBytes());
-        return .{ .id = id, .signing = kp, .created_at_ms = clock.nowMs() };
+        return .{ .id = id, .signing = kp, .created_at_ms = clock.nowMs(io) };
     }
 };
 pub fn identityId(public_key: [32]u8) ids.Id {
@@ -37,8 +37,8 @@ pub fn safety(local: [32]u8, peer: [32]u8, out: *[47]u8) void {
     }
 }
 test "safety is symmetric" {
-    const a = Identity.create();
-    const b = Identity.create();
+    const a = Identity.create(std.testing.io);
+    const b = Identity.create(std.testing.io);
     var x: [47]u8 = undefined;
     var y: [47]u8 = undefined;
     safety(a.signing.public_key.toBytes(), b.signing.public_key.toBytes(), &x);
