@@ -14,7 +14,15 @@ pub const Session = struct {
         self.send_number += 1;
         return key;
     }
-    pub fn close(self: *Session) void { std.crypto.secureZero(u8, &self.root_key); std.crypto.secureZero(u8, &self.sending_chain); std.crypto.secureZero(u8, &self.receiving_chain); }
+    pub fn close(self: *Session) void {
+        std.crypto.secureZero(u8, &self.root_key);
+        std.crypto.secureZero(u8, &self.sending_chain);
+        std.crypto.secureZero(u8, &self.receiving_chain);
+    }
 };
 
-test "a chain consumes distinct keys" { var s = Session{ .root_key = [_]u8{1} ** 32, .sending_chain = [_]u8{2} ** 32, .receiving_chain = [_]u8{3} ** 32 }; try std.testing.expect(!std.mem.eql(u8, &s.nextSendingKey(), &s.nextSendingKey())); s.close(); }
+test "a chain consumes distinct keys" {
+    var s = Session{ .root_key = [_]u8{1} ** 32, .sending_chain = [_]u8{2} ** 32, .receiving_chain = [_]u8{3} ** 32 };
+    try std.testing.expect(!std.mem.eql(u8, &s.nextSendingKey(), &s.nextSendingKey()));
+    s.close();
+}
